@@ -1,47 +1,5 @@
-<?php
-
-session_start();
-
-
-
-
-require 'db.php'; // Include the database connection file
-
-$error_message = ''; // Variable to hold the error message
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Get user inputs from the login form
-    $user_name = trim($_POST['user_name']);
-    $password = trim($_POST['password']);
-
-    try {
-        // Get user record from database by user_name
-        $stmt = $pdo->prepare("SELECT * FROM user_account WHERE user_name = :user_name");
-        $stmt->bindParam(':user_name', $user_name);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user) {
-            // Check if password matches using password_verify
-            if (password_verify($password, $user['password'])) { // Secure password validation
-                // Start the session and store user info
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['user_name'];
-
-                // Redirect to homepage
-                header("Location: homepage.php");
-                exit(); // Always call exit after redirect
-            } else {
-                $error_message = 'Incorrect password.'; // Set error message
-            }
-        } else {
-            // User not found
-            $error_message = 'No user found with that username.'; // Set error message
-        }
-    } catch (PDOException $e) {
-        $error_message = 'An error occurred. Please try again.'; // Set error message
-    }
-}
+<?php 
+require 'db.php';
 ?>
 
 <!DOCTYPE html>
@@ -49,164 +7,141 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to O'clock</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.3/dist/sweetalert2.all.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.3/dist/sweetalert2.min.css">
-
+    <title>Admin Panel - Add Product</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        /* Custom styles for the admin panel */
         body {
             font-family: 'Cambria', serif;
-            background: url('bg.png') no-repeat center center fixed;
-            background-size: cover;
-            color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            position: relative;
+            background-color: #f4f4f4;
         }
 
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1;
+        .navbar {
+            background-color: black;
+        }
+
+        .navbar .navbar-brand {
+            color: white;
+        }
+
+        .navbar .navbar-nav .nav-item .nav-link {
+            color: white;
+        }
+
+        .navbar .navbar-nav .nav-item .nav-link:hover {
+            color: #ccc;
         }
 
         .form-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 30px;
-            background-color: #fff;
-            border: 1px solid #000;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 2;
+            margin: 150px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .logo-container {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin: 0 auto 30px;
-        }
-
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .form-control {
-            border-color: #000;
-            background-color: #fff;
-            color: #000;
+        .form-container h2 {
             margin-bottom: 20px;
+            font-weight: bold;
+            color: black;
+        }
+
+        .form-group label {
+            font-weight: bold;
+        }
+
+        .btn-submit {
+            background-color: black;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #333;
+            color: white;
+        }
+
+        .alert {
             padding: 15px;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            margin-top: 20px;
         }
 
-        .form-control::placeholder {
-            color: #000;
+        .alert-success {
+            background-color: #28a745;
+            color: white;
         }
 
-        .form-control:focus {
-            box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-outline-dark {
-            border-color: #000;
-            color: #000;
-            background-color: #fff;
-            padding: 15px 20px;
-            font-weight: bold;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-outline-dark:hover {
-            background-color: #000;
-            color: #fff;
-        }
-
-        .text-center {
-            text-align: center;
-            color: #000;
-        }
-
-        .form-label {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #000;
-        }
-
-        a.text-decoration-none {
-            color: #000;
-            font-weight: bold;
-            font-size: 1rem;
-        }
-
-        a.text-decoration-none:hover {
-            color: #555;
-        }
-
-        .form-control, .btn-outline-dark {
-            transition: all 0.3s ease;
-        }
-
-        .form-control:hover, .btn-outline-dark:hover {
-            transform: translateY(-2px);
-        }
-
-        .error-message {
-            color: red;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            text-align: center;
+        .alert-danger {
+            background-color: #dc3545;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <div class="logo-container">
-            <img src="oclocks.png" alt="Logo">
-        </div>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">Admin Panel</a>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="ad_board.php">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="inventory.php">Inventory</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="logout.php">Logout</a>
+            </li>
+        </ul>
+    </nav>
 
-        <!-- Display error message here -->
-        <?php if ($error_message): ?>
-            <div class="error-message">
-                <?php echo $error_message; ?>
+    <div class="container form-container">
+        <h2>Add New Product</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Product Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
             </div>
-        <?php endif; ?>
-
-        <form method="POST" action="">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" id="username" placeholder="Enter your username" class="form-control" name="user_name" required>
+            <div class="form-group">
+                <label for="price">Product Price</label>
+                <input type="number" class="form-control" id="price" name="price" required step="0.01">
             </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" placeholder="Enter your password" class="form-control" name="password" required>
+            <div class="form-group">
+                <label for="image">Product Image</label>
+                <input type="file" class="form-control" id="image" name="image" required>
             </div>
-            <div class="d-grid">
-                <button type="submit" class="btn btn-outline-dark">Login</button>
-            </div>
-            <div class="mt-3 text-center">
-                <p>Don't have an account? <a href="register.php" class="text-decoration-none">Create New</a></p>
-            </div>
+            <button type="submit" name="submit" class="btn btn-submit">Add Product</button>
         </form>
     </div>
 
-    <script src="js/bootstrap.min.js"></script>
+    <?php
+    if (isset($_POST['submit'])) {
+        // Get data from the form
+        $name = $_POST['name'];
+        $price = $_POST['price'];
+        $image = $_FILES['image']['name'];
+
+        // Define the target directory for the image upload
+        $targetDir = 'uploads/';
+        $targetFile = $targetDir . basename($image);
+
+        // Move the uploaded image to the target directory
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+            try {
+                // Insert product data into the database
+                $stmt = $pdo->prepare("INSERT INTO products (name, price, image) VALUES (:name, :price, :image)");
+                $stmt->execute([ 
+                    ':name' => $name,
+                    ':price' => $price,
+                    ':image' => $image
+                ]);
+                echo '<div class="alert alert-success mt-3">Product added successfully!</div>';
+            } catch (PDOException $e) {
+                echo '<div class="alert alert-danger mt-3">Error: ' . $e->getMessage() . '</div>';
+            }
+        } else {
+            echo '<div class="alert alert-danger mt-3">Failed to upload image.</div>';
+        }
+    }
+    ?>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
